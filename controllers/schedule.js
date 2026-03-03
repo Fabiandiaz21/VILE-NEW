@@ -2,12 +2,9 @@ import Schedule from '../models/schedule.js'
 
 import User from '../models/user.js'
 
-import { v2 as cloudinary } from 'cloudinary'
-
 import sendEmail from "../middlewares/sendEmail.js"
 
 import fs from 'fs'
-
 
 import path from 'path'
 

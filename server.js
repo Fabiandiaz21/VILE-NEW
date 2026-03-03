@@ -38,7 +38,6 @@ class Server {
 
     this.connect()
     this.middlewares()
-    this.config()
     this.routes()
     this.sockets()
   }
@@ -59,25 +58,7 @@ middlewares() {
   this.app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 }
 
-  config() {
-    // ✅ USA __dirname en lugar de process.cwd()
-    const fileName = process.env.GOOGLE_SERVICE_ACCOUNT || 'service-account.json'
-    const serviceAccountPath = path.join(__dirname, fileName)
 
-    // Guardar ruta global
-    this.app.set('SERVICE_ACCOUNT_PATH', serviceAccountPath)
-
-    // 🧪 Verificación
-    console.log('🔑 Service Account Path:', serviceAccountPath)
-    console.log('🔑 Service Account existe:', fs.existsSync(serviceAccountPath))
-
-    try {
-      const content = fs.readFileSync(serviceAccountPath, 'utf8')
-      console.log('✅ Archivo leído correctamente, tamaño:', content.length, 'bytes')
-    } catch (error) {
-      console.error('❌ No se puede leer el archivo:', error.message)
-    }
-  }
 
   routes() {
     this.app.use('/schedule', routerSchedule)
@@ -101,7 +82,7 @@ middlewares() {
 
   listen() {
     this.httpServer.listen(process.env.PORT, () => {
-      console.log(`🚀 Servidor iniciado en puerto ${process.env.PORT}`)
+      console.log(`🚀 Servidor iniciado en puerto http://localhost:${process.env.PORT}`)
     })
   }
 }
