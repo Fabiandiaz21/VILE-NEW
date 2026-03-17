@@ -168,6 +168,10 @@ documents: {
   tiquetes: [{
     url: String,
     public_id: String
+  }],
+  reintegros: [{
+    url: String,
+    public_id: String
   }]
 }
 

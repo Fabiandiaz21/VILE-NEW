@@ -39,8 +39,7 @@ const httpSchedule = {
 
             // ✅ Obtener usuario ANTES de usarlo
             const user = await User.findById(req.body.userId)
-                .populate('supervisor')
-                .populate('paymaster');
+                .populate('supervisor');
 
             if (!user) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
@@ -102,91 +101,6 @@ const httpSchedule = {
                         console.log('Correo de creación de agenda enviado a supervisor');
                     }
                 });
-            } else if (user.role.data === "user" && user.staffType.data === "publicWorker") {
-                // FUNCIONARIO CREA AGENDA
-
-                // Obtener el correo del ordenador
-
-                const paymasterEmail = user.paymaster.mail;
-
-                let mailOptions = {
-                    from: process.env.MAIL_ADDRESS,
-                    to: paymasterEmail,
-                    subject: 'Creación de agenda',
-                    html: `<div style="border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: 0 auto;text-align:center">
-                    <div style="background-color: #39a900; text-align: center; line-height: 50px;padding:10px">
-                    <img src="cid:logo_sena" alt="Logo del Sena" style="vertical-align: middle; width: 50px; height: 50px;">
-                    <h1 style="color:white; display: inline-block; margin-left:10px; line-height: normal;">VILE</h1>
-                    </div><br />
-                    <p style="font-size: 16px; color: #333;font-weight:bold">NUEVA AGENDA CREADA</p>
-                    <img src="cid:nuevo" alt="Nueva Agenda" style="display: block; margin: 0 auto; max-width: 20%; height: auto;">
-                    <p style="font-size: 16px; color: #333;font-weight:bold">Hola ${user.paymaster.name},</p>
-                    <p style="font-size: 16px; color: #333;">El funcionario <strong>${user.name}</strong> ha creado una nueva agenda. Por favor, revísala para aprobarla o rechazarla.</p>
-                    <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #39a900; color: #fff; text-decoration: none; border-radius: 5px; text-align: center; margin: 20px auto;">IR A VILE</a><br />
-                    <span>*Este correo es generado automáticamente, por favor no responder</span>
-                </div>
-                `,
-                    attachments: [
-                        {
-                            filename: 'nuevo.png',
-                            path: './images/nuevo.png',
-                            cid: 'nuevo'
-                        },
-                        {
-                            filename: 'logo-sena-blanco.png',
-                            path: './images/logo-sena-blanco.png',
-                            cid: 'logo_sena'
-                        }
-                    ]
-
-                };
-                sendEmail.sendMail(mailOptions, function (error) {
-                    if (error) {
-                        console.log(error);
-                    } else {
-                        console.log('Correo de creacion de agenda funcionario enviado');
-                    }
-                });
-            } else if (user.role.data = "supervisor") {
-                const paymasterEmail = user.paymaster.mail;
-
-                let mailOptions = {
-                    from: process.env.MAIL_ADDRESS,
-                    to: paymasterEmail,
-                    subject: 'Creación de agenda',
-                    html: `<div style="border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: 0 auto;text-align:center">
-                    <div style="background-color: #39a900; text-align: center; line-height: 50px;padding:10px">
-                    <img src="cid:logo_sena" alt="Logo del Sena" style="vertical-align: middle; width: 50px; height: 50px;">
-                    <h1 style="color:white; display: inline-block; margin-left:10px; line-height: normal;">VILE</h1>
-                    </div><br />
-                    <p style="font-size: 16px; color: #333;font-weight:bold">NUEVA AGENDA CREADA</p>
-                    <img src="cid:nuevo" alt="Nueva Agenda" style="display: block; margin: 0 auto; max-width: 20%; height: auto;">
-                    <p style="font-size: 16px; color: #333;font-weight:bold">Hola ${user.paymaster.name},</p>
-                    <p style="font-size: 16px; color: #333;">El supervisor de contrato <strong>${user.name}</strong> ha creado una nueva agenda. Por favor, revísala para aprobarla o rechazarla.</p>
-                    <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #39a900; color: #fff; text-decoration: none; border-radius: 5px; text-align: center; margin: 20px auto;">IR A VILE</a><br />
-                    <span>*Este correo es generado automáticamente, por favor no responder</span>
-                </div>
-                `,
-                    attachments: [
-                        {
-                            filename: 'nuevo.png',
-                            path: './images/nuevo.png',
-                            cid: 'nuevo'
-                        },
-                        {
-                            filename: 'logo-sena-blanco.png',
-                            path: './images/logo-sena-blanco.png',
-                            cid: 'logo_sena'
-                        }
-                    ]
-                };
-                sendEmail.sendMail(mailOptions, function (error) {
-                    if (error) {
-                        console.log(error);
-                    } else {
-                        console.log('Correo de creacion de agenda supervisor enviado');
-                    }
-                });
             }
 
             return res.status(200).json({ msg: 'Agenda creada' })
@@ -214,10 +128,6 @@ const httpSchedule = {
 
             if (req.query.supervisor) {
                 query['supervisor.id'] = new mongoose.Types.ObjectId(req.query.supervisor)
-            }
-
-            if (req.query.paymaster) {
-                query['paymaster._id'] = new mongoose.Types.ObjectId(req.query.paymaster)
             }
 
             if (req.query.contractor) {
@@ -346,7 +256,7 @@ const httpSchedule = {
 
 
         // Obtener el usuario que creó la agenda
-        const creator = await User.findOne({ mail: schedule.contract.mail }).populate('paymaster').populate('supervisor');
+        const creator = await User.findOne({ mail: schedule.contract.mail }).populate('supervisor');
 
         const link = process.env.CLIENT_URL
 
@@ -393,43 +303,6 @@ const httpSchedule = {
                     }
                 });
 
-            } else if (modUser.role.data === "paymaster") {
-                // ORDENADOR RECHAZA AGENDA
-                let paymasterMailOptions = {
-                    from: process.env.MAIL_ADDRESS,
-                    to: creator.mail,
-                    subject: 'Agenda Rechazada',
-                    html: `<div style="border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: 0 auto;text-align:center">
-                        <div style="background-color: #39a900; text-align: center; line-height: 50px;padding:10px">
-                        <img src="cid:logo_sena" alt="Logo del Sena" style="vertical-align: middle; width: 50px; height: 50px;">
-                        <h1 style="color:white; display: inline-block; margin-left:10px; line-height: normal;">VILE</h1>
-                        </div><br />
-                        <p style="font-size: 16px; color: #333;font-weight:bold">AGENDA RECHAZADA</p>
-                        <img src="cid:rechazar" alt="Rechazar" style="display: block; margin: 0 auto; max-width: 20%; height: auto;"><br />
-                        <p style="font-size: 16px; color: #333;font-weight:bold">Hola ${creator.name},</p>
-                        <p style="font-size: 16px; color: #333;">El ordenador del gasto <strong>${modUser.name}</strong> ha rechazado su agenda creada con la siguiente justificacion: <strong>${schedule.status.justification}</strong></p>
-                        <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #39a900; color: #fff; text-decoration: none; border-radius: 5px; text-align: center; margin: 20px auto;">IR A VILE</a><br />
-                        <span>*Este correo es generado automáticamente, por favor no responder</span>
-                    </div>
-                    `,
-                    attachments: [{
-                        filename: 'logo-sena-blanco.png',
-                        path: './images/logo-sena-blanco.png',
-                        cid: 'logo_sena'
-                    },
-                    {
-                        filename: 'rechazar.png',
-                        path: './images/rechazar.png',
-                        cid: 'rechazar'
-                    }]
-                }
-                sendEmail.sendMail(paymasterMailOptions, function (error) {
-                    if (error) {
-                        console.log(error);
-                    } else {
-                        console.log('Correo de rechazo de ordenador enviado');
-                    }
-                });
             }
 
         } else if (req.body.status.data === 'Agenda firmada por Contratista') {
@@ -476,12 +349,10 @@ const httpSchedule = {
 
 
         } else if (req.body.status.data === 'Agenda firmada por Funcionario') {
-            // CUANDO EL FUNCIONARIO MODIFICA AGENDA, NOTIFICAR AL ORDENADOR
-
-            // NOTIFICAR AL ORDENADOR
+            // CUANDO EL FUNCIONARIO MODIFICA AGENDA (sin notificación al ordenador)
             let creatorMailOptions = {
                 from: process.env.MAIL_ADDRESS,
-                to: creator.paymaster.mail,
+                to: creator.mail,
                 subject: 'Agenda Modificada',
                 html: `<div style="border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: 0 auto;text-align:center">
                     <div style="background-color: #39a900; text-align: center; line-height: 50px;padding:10px">
@@ -490,9 +361,8 @@ const httpSchedule = {
                     </div><br />
                     <p style="font-size: 16px; color: #333;font-weight:bold">AGENDA MODIFICADA</p>
                     <img src="cid:editar" alt="Editada" style="display: block; margin: 0 auto; max-width: 20%; height: auto;"><br />
-                    <p style="font-size: 16px; color: #333;font-weight:bold">Hola ${creator.paymaster.name},</p>
-                    <p style="font-size: 16px; color: #333;">El funcionario <strong>${creator.name}</strong> ha modificado una agenda creada. Queda pendiente por su aprobación
-                    o rechazo.</p>
+                    <p style="font-size: 16px; color: #333;font-weight:bold">Hola ${creator.name},</p>
+                    <p style="font-size: 16px; color: #333;">Tu agenda ha sido modificada.</p>
                     <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #39a900; color: #fff; text-decoration: none; border-radius: 5px; text-align: center; margin: 20px auto;">IR A VILE</a><br />
                     <span>*Este correo es generado automáticamente, por favor no responder</span>
                 </div>
@@ -538,8 +408,7 @@ const httpSchedule = {
                     <p style="font-size: 16px; color: #333;font-weight:bold">AGENDA FIRMADA</p>
                     <img src="cid:aceptar" alt="Aceptación" style="display: block; margin: 0 auto; max-width: 20%; height: auto;"><br />
                     <p style="font-size: 16px; color: #333;font-weight:bold">Hola ${creator.name},</p>
-                    <p style="font-size: 16px; color: #333;">Su supervisor de contrato <strong>${supervisor.name}</strong> ha aprobado su agenda creada. Queda pendiente por aprobación del
-                    ordenador del gasto</p>
+                    <p style="font-size: 16px; color: #333;">Su supervisor de contrato <strong>${supervisor.name}</strong> ha aprobado y firmado su agenda.</p>
                     <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #39a900; color: #fff; text-decoration: none; border-radius: 5px; text-align: center; margin: 20px auto;">IR A VILE</a><br />
                     <span>*Este correo es generado automáticamente, por favor no responder</span>
                 </div>
@@ -556,139 +425,12 @@ const httpSchedule = {
                 }]
             };
 
-            // NOTIFICAR AL ORDENADOR
-            let paymasterMailOptions = {
-                from: process.env.MAIL_ADDRESS,
-                to: creator.paymaster.mail,
-                subject: 'Agenda Aprobada y Firmada',
-                html: `<div style="border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: 0 auto;text-align:center">
-                    <div style="background-color: #39a900; text-align: center; line-height: 50px;padding:10px">
-                    <img src="cid:logo_sena" alt="Logo del Sena" style="vertical-align: middle; width: 50px; height: 50px;">
-                    <h1 style="color:white; display: inline-block; margin-left:10px; line-height: normal;">VILE</h1>
-                    </div><br />
-                    <p style="font-size: 16px; color: #333;font-weight:bold">AGENDA FIRMADA</p>
-                    <img src="cid:aceptar" alt="Aceptación" style="display: block; margin: 0 auto; max-width: 20%; height: auto;"><br />
-                    <p style="font-size: 16px; color: #333;font-weight:bold">Hola ${creator.paymaster.name},</p>
-                    <p style="font-size: 16px; color: #333;">El supervisor de contrato <strong>${supervisor.name}</strong> del contratista <strong>${creator.name}</strong> ha aprobado la agenda creada. Queda pendiente por su
-                    aprobación o rechazo</p>
-                    <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #39a900; color: #fff; text-decoration: none; border-radius: 5px; text-align: center; margin: 20px auto;">IR A VILE</a><br />
-                    <span>*Este correo es generado automáticamente, por favor no responder</span>
-                </div>
-                `,
-                attachments: [{
-                    filename: 'logo-sena-blanco.png',
-                    path: './images/logo-sena-blanco.png',
-                    cid: 'logo_sena'
-                },
-                {
-                    filename: 'aceptar.png',
-                    path: './images/aceptar.png',
-                    cid: 'aceptar'
-                }]
-            }
-
-            // Envío de correos
+            // Envío de correo al creador
             sendEmail.sendMail(creatorMailOptions, function (error) {
                 if (error) {
                     console.log('Error al enviar correo al creador:', error);
                 } else {
                     console.log('Correo al creador enviado correctamente');
-                }
-            });
-
-            sendEmail.sendMail(paymasterMailOptions, function (error) {
-                if (error) {
-                    console.log('Error al enviar correo al ordenador:', error);
-                } else {
-                    console.log('Correo al ordenador enviado correctamente');
-                }
-            });
-        } else if (req.body.status.data === "Agenda firmada por Ordenador") {
-
-            // Obtener el paymaster que modificó la agenda
-            const paymaster = await User.findById(req.body.userId)
-
-            // NOTIFICAR AL CREADOR
-            let mailOptions = {
-                from: process.env.MAIL_ADDRESS,
-                to: creator.mail,
-                subject: 'Agenda Aprobada y Firmada',
-                html: `<div style="border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: 0 auto;text-align:center">
-                    <div style="background-color: #39a900; text-align: center; line-height: 50px;padding:10px">
-                    <img src="cid:logo_sena" alt="Logo del Sena" style="vertical-align: middle; width: 50px; height: 50px;">
-                    <h1 style="color:white; display: inline-block; margin-left:10px; line-height: normal;">VILE</h1>
-                    </div><br />
-                    <p style="font-size: 16px; color: #333;font-weight:bold">AGENDA FIRMADA</p>
-                    <img src="cid:aceptar" alt="Aceptación" style="display: block; margin: 0 auto; max-width: 20%; height: auto;"><br />
-                    <p style="font-size: 16px; color: #333;font-weight:bold">Hola ${creator.name},</p>
-                    <p style="font-size: 16px; color: #333;">El ordenador del gasto <strong>${paymaster.name}</strong> ha aprobado su agenda creada. Queda pendiente por 
-                    la creación de legalización por parte del Administrador</p>
-                    <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #39a900; color: #fff; text-decoration: none; border-radius: 5px; text-align: center; margin: 20px auto;">IR A VILE</a><br />
-                    <span>*Este correo es generado automáticamente, por favor no responder</span>
-                </div>
-                `,
-                attachments: [{
-                    filename: 'logo-sena-blanco.png',
-                    path: './images/logo-sena-blanco.png',
-                    cid: 'logo_sena'
-                },
-                {
-                    filename: 'aceptar.png',
-                    path: './images/aceptar.png',
-                    cid: 'aceptar'
-                }]
-
-            };
-
-            // NOTIFICA AL ADMIN
-
-            // obtener el admin
-            const adminUser = await User.findOne({ 'role.data': 'administrator' });
-
-            let adminMailOptions = {
-                from: process.env.MAIL_ADDRESS,
-                to: adminUser.mail,
-                subject: 'Agenda Aprobada y Firmada',
-                html: `<div style="border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: 0 auto;text-align:center">
-                    <div style="background-color: #39a900; text-align: center; line-height: 50px;padding:10px">
-                    <img src="cid:logo_sena" alt="Logo del Sena" style="vertical-align: middle; width: 50px; height: 50px;">
-                    <h1 style="color:white; display: inline-block; margin-left:10px; line-height: normal;">VILE</h1>
-                    </div><br />
-                    <p style="font-size: 16px; color: #333;font-weight:bold">AGENDA FIRMADA</p>
-                    <img src="cid:aceptar" alt="Aceptación" style="display: block; margin: 0 auto; max-width: 20%; height: auto;"><br />
-                    <p style="font-size: 16px; color: #333;font-weight:bold">Hola administrador ${adminUser.name},</p>
-                    <p style="font-size: 16px; color: #333;">El ordenador del gasto <strong>${paymaster.name}</strong> ha firmado la agenda de <strong>${creator.name}</strong>. Queda pendiente por 
-                    la creación de la legalización</p>
-                    <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #39a900; color: #fff; text-decoration: none; border-radius: 5px; text-align: center; margin: 20px auto;">IR A VILE</a><br />
-                    <span>*Este correo es generado automáticamente, por favor no responder</span>
-                </div>
-                `,
-                attachments: [{
-                    filename: 'logo-sena-blanco.png',
-                    path: './images/logo-sena-blanco.png',
-                    cid: 'logo_sena'
-                },
-                {
-                    filename: 'aceptar.png',
-                    path: './images/aceptar.png',
-                    cid: 'aceptar'
-                }]
-
-            };
-
-            sendEmail.sendMail(mailOptions, function (error) {
-                if (error) {
-                    console.log('Error al enviar correo del ordenador aprobado...', error);
-                } else {
-                    console.log('Correo del ordenador enviado correctamente');
-                }
-            });
-
-            sendEmail.sendMail(adminMailOptions, function (error) {
-                if (error) {
-                    console.log('Error al enviar correo al admin...', error);
-                } else {
-                    console.log('Correo del ordenador al admin enviado correctamente');
                 }
             });
 
@@ -1045,13 +787,14 @@ const httpSchedule = {
 
             // Mantener este evento (está bien)
             if (ioInstance) {
-                ioInstance.emit('legalizacion-rechazada', {
-                    scheduleId: id,
-                    supervisorName: sup.name,
-                    contractorName: schedule.contract.contractorName,
-                    justification: schedule.status.justification,
-                    timestamp: new Date().toISOString()
-                });
+ioInstance.emit('agenda-legalizada', {
+    scheduleId: id,
+    statusIndex: 4,
+    statusNumber: 3,
+    contractorId: schedule.contractor,
+    supervisorId: req.body.userId,
+    justification: schedule.status.justification
+});
                 console.log('✅ Evento "legalizacion-rechazada" emitido');
             }
 
